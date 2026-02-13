@@ -442,18 +442,31 @@
                     'playlist': 'EWSsbktWV6U'
                 },
                 events: {
-                    'onReady': onPlayerReady
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
                 }
             });
         };
 
         function onPlayerReady(event) {
-            musicReady = true;
-            // Hide loading screen and show main screen
-            setTimeout(() => {
-                loadingScreen.classList.add('hidden');
-                mainScreen.classList.add('visible');
-            }, 500);
+            // Start playing muted to buffer the video
+            player.mute();
+            player.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            // When video starts playing (buffered), pause it and show main screen
+            if (event.data === YT.PlayerState.PLAYING && !musicReady) {
+                musicReady = true;
+                player.pauseVideo();
+                player.unMute();
+
+                // Hide loading screen and show main screen
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    mainScreen.classList.add('visible');
+                }, 500);
+            }
         }
 
         // ── NO button text progression ──
@@ -549,6 +562,7 @@
 
                 // Play the sad song using YouTube API
                 if (player && musicReady) {
+                    player.seekTo(0);
                     player.playVideo();
                 }
 
