@@ -24,10 +24,53 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         }
 
+        /* Loading screen */
+        .loading-screen {
+            text-align: center;
+            padding: 2rem;
+            display: block;
+        }
+
+        .loading-screen.hidden {
+            display: none;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(231, 76, 60, 0.2);
+            border-top: 5px solid #e74c3c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-screen h2 {
+            font-size: 1.5rem;
+            color: #e74c3c;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-screen p {
+            font-size: 1rem;
+            color: #c0392b;
+            opacity: 0.8;
+        }
+
         .main-screen {
             text-align: center;
             padding: 2rem;
             transition: opacity 0.6s ease;
+            display: none;
+        }
+
+        .main-screen.visible {
+            display: block;
         }
 
         .main-screen h1 {
@@ -317,6 +360,13 @@
 </head>
 <body>
 
+    <!-- Loading screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+        <h2>Loading...</h2>
+        <p>Preparing something special for you 💕</p>
+    </div>
+
     <!-- Tease message -->
     <div class="tease-msg" id="teaseMsg"></div>
 
@@ -342,11 +392,10 @@
     </div>
 
     <!-- Hidden YouTube player for music only -->
-    <iframe id="ytPlayer" 
-            src="about:blank" 
-            allow="autoplay; encrypted-media" 
-            style="position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;"
-    ></iframe>
+    <div id="ytPlayer"></div>
+
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 
     <!-- ===== SUCCESS SCREEN (SAD PRANK REVEAL) ===== -->
     <div class="success-screen" id="successScreen">
@@ -370,12 +419,42 @@
         const noBtn = document.getElementById('noBtn');
         const mainScreen = document.getElementById('mainScreen');
         const successScreen = document.getElementById('successScreen');
+        const loadingScreen = document.getElementById('loadingScreen');
         const teaseMsg = document.getElementById('teaseMsg');
         const escapeCounter = document.getElementById('escapeCounter');
         const escapeCountEl = document.getElementById('escapeCount');
 
         let escapeCount = 0;
         let teaseTimeout = null;
+        let player = null;
+        let musicReady = false;
+
+        // YouTube IFrame API callback
+        window.onYouTubeIframeAPIReady = function() {
+            player = new YT.Player('ytPlayer', {
+                height: '0',
+                width: '0',
+                videoId: 'EWSsbktWV6U',
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'loop': 1,
+                    'playlist': 'EWSsbktWV6U'
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        };
+
+        function onPlayerReady(event) {
+            musicReady = true;
+            // Hide loading screen and show main screen
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                mainScreen.classList.add('visible');
+            }, 500);
+        }
 
         // ── NO button text progression ──
         const noTexts = [
@@ -468,9 +547,10 @@
                 // Switch to sad mode
                 document.body.classList.add('sad-mode');
 
-                // Play the sad song (audio only, no video visible)
-                const player = document.getElementById('ytPlayer');
-                player.src = 'https://www.youtube.com/embed/EWSsbktWV6U?autoplay=1&loop=1&playlist=EWSsbktWV6U';
+                // Play the sad song using YouTube API
+                if (player && musicReady) {
+                    player.playVideo();
+                }
 
                 // Start sad effects
                 launchFloatingHearts();
