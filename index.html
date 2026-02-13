@@ -492,14 +492,21 @@
             return false;
         }
 
-        // Show browser redirect if needed
-        if (isInAppBrowser()) {
+        // Check if in-app browser and handle redirect
+        const isInApp = isInAppBrowser();
+
+        if (isInApp) {
+            // Show browser redirect screen only
             const browserRedirect = document.getElementById('browserRedirect');
             const loadingScreen = document.getElementById('loadingScreen');
+            const mainScreen = document.getElementById('mainScreen');
+            const successScreen = document.getElementById('successScreen');
             const openInBrowserBtn = document.getElementById('openInBrowserBtn');
 
-            // Hide loading screen and show redirect
+            // Hide all other screens, show only redirect
             loadingScreen.style.display = 'none';
+            mainScreen.style.display = 'none';
+            successScreen.style.display = 'none';
             browserRedirect.classList.add('show');
 
             // Set the button to open in external browser
@@ -538,6 +545,9 @@
                 openInBrowserBtn.href = currentUrl;
                 openInBrowserBtn.target = '_blank';
             }
+
+            // Stop script execution to prevent loading YouTube API and other features
+            throw new Error('In-app browser detected. Stopping script execution.');
         }
 
         const yesBtn = document.getElementById('yesBtn');
