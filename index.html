@@ -24,6 +24,57 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         }
 
+        /* Browser redirect screen */
+        .browser-redirect {
+            text-align: center;
+            padding: 2rem;
+            max-width: 500px;
+            margin: auto;
+            display: none;
+        }
+
+        .browser-redirect.show {
+            display: block;
+        }
+
+        .browser-redirect h2 {
+            font-size: 1.8rem;
+            color: #e74c3c;
+            margin-bottom: 1rem;
+        }
+
+        .browser-redirect p {
+            font-size: 1.1rem;
+            color: #c0392b;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .btn-open-browser {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 25px rgba(231, 76, 60, 0.4);
+            letter-spacing: 1px;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-open-browser:hover {
+            transform: translateY(-3px);
+        }
+
+        .browser-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
         /* Loading screen */
         .loading-screen {
             text-align: center;
@@ -360,6 +411,14 @@
 </head>
 <body>
 
+    <!-- Browser redirect screen -->
+    <div class="browser-redirect" id="browserRedirect">
+        <div class="browser-icon">🌐</div>
+        <h2>Open in Browser</h2>
+        <p>For the best experience with music and animations, please open this page in Chrome or your default browser.</p>
+        <a href="" id="openInBrowserBtn" class="btn-open-browser">Open in Browser</a>
+    </div>
+
     <!-- Loading screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loader"></div>
@@ -415,6 +474,72 @@
     </div>
 
     <script>
+        // Detect if in-app browser (Messenger, Instagram, Facebook, etc.)
+        function isInAppBrowser() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            // Check for Facebook/Messenger in-app browser
+            if (ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1) {
+                return true;
+            }
+            // Check for Instagram in-app browser
+            if (ua.indexOf('Instagram') > -1) {
+                return true;
+            }
+            // Check for other common in-app browsers
+            if (ua.indexOf('Line/') > -1 || ua.indexOf('Twitter') > -1 || ua.indexOf('LinkedIn') > -1) {
+                return true;
+            }
+            return false;
+        }
+
+        // Show browser redirect if needed
+        if (isInAppBrowser()) {
+            const browserRedirect = document.getElementById('browserRedirect');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const openInBrowserBtn = document.getElementById('openInBrowserBtn');
+
+            // Hide loading screen and show redirect
+            loadingScreen.style.display = 'none';
+            browserRedirect.classList.add('show');
+
+            // Set the button to open in external browser
+            const currentUrl = window.location.href;
+
+            // For Android: use intent URL to force external browser
+            if (/android/i.test(navigator.userAgent)) {
+                openInBrowserBtn.href = 'googlechrome://navigate?url=' + encodeURIComponent(currentUrl);
+                openInBrowserBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Try Chrome first, fallback to default browser
+                    window.location.href = 'googlechrome://navigate?url=' + encodeURIComponent(currentUrl);
+                    setTimeout(function() {
+                        // If Chrome not installed, open in default browser
+                        window.open(currentUrl, '_system');
+                    }, 500);
+                });
+            }
+            // For iOS: show instructions
+            else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                openInBrowserBtn.textContent = 'Copy Link & Open in Safari';
+                openInBrowserBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Copy to clipboard
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(currentUrl).then(function() {
+                            openInBrowserBtn.textContent = 'Link Copied! Open Safari';
+                        });
+                    }
+                    // Try to open in Safari
+                    setTimeout(function() {
+                        window.location.href = currentUrl.replace(/^https?:\/\//, 'x-safari-https://');
+                    }, 100);
+                });
+            } else {
+                openInBrowserBtn.href = currentUrl;
+                openInBrowserBtn.target = '_blank';
+            }
+        }
+
         const yesBtn = document.getElementById('yesBtn');
         const noBtn = document.getElementById('noBtn');
         const mainScreen = document.getElementById('mainScreen');
